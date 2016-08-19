@@ -1,16 +1,9 @@
 package com.company;
 
-
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Iterator;
-import java.util.Scanner;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.stream.JsonReader;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -30,9 +23,7 @@ public class Main {
             JSONParser parser = new JSONParser();
             JSONArray json = (JSONArray) parser.parse(stringBuilde.toString());
 
-//            System.out.println(json);
-
-            JSONArray resultJsonArray =   Main.process(json);
+            JSONArray resultJsonArray = Main.process(json);
 
             System.out.println("HEY : " + resultJsonArray);
         } catch (FileNotFoundException e1) {
@@ -46,15 +37,17 @@ public class Main {
     }
 
 
-    public static JSONArray process(JSONArray data){
+    public static JSONArray process(JSONArray data) {
         JSONArray resultJson = new JSONArray();
 
         try {
             JSONArray jsonArray = new JSONArray();
             jsonArray.addAll(data);
 
+            JSONArray emptyJsonArray = new JSONArray();
             for (int i = 0; i < jsonArray.size(); i++) {
                 JSONArray trackJsonArray = new JSONArray();
+                JSONArray busStopsJsonArray = new JSONArray();
                 JSONObject newJson = new JSONObject();
                 JSONObject firstJsonObject = (JSONObject) jsonArray.get(i);
 
@@ -65,10 +58,24 @@ public class Main {
                 firstTrackObject.put("lon", lon);
                 trackJsonArray.add(firstTrackObject);
 
+                JSONObject stopsJsonObject = new JSONObject();
+
+                //searching for busstops points
+                if (firstJsonObject.get("isStopPoint").equals(1)) {
+                    stopsJsonObject.put("id", firstJsonObject.get("stopID"));
+                    stopsJsonObject.put("title", firstJsonObject.get("stopTitle"));
+                    stopsJsonObject.put("x", firstJsonObject.get("stopLongitude"));
+                    stopsJsonObject.put("y", firstJsonObject.get("stopLatitude"));
+                    stopsJsonObject.put("desc", "");
+                    stopsJsonObject.put("routes", emptyJsonArray);
+                    busStopsJsonArray.add(stopsJsonObject);
+                    newJson.put("busstops", busStopsJsonArray);
+                }
+
                 for (int j = i + 1; j < jsonArray.size(); j++) {
 
                     JSONObject secondJsonObject = (JSONObject) jsonArray.get(j);
-                    if (firstJsonObject.get("routeNumber").equals(secondJsonObject.get("routeNumber"))){
+                    if (firstJsonObject.get("routeNumber").equals(secondJsonObject.get("routeNumber"))) {
                         //if equal then create track array with lat lon
 
                         JSONObject secondTrackObject = new JSONObject();
@@ -80,10 +87,31 @@ public class Main {
                         trackJsonArray.add(secondTrackObject);
 
                         newJson.put("track", trackJsonArray);
-                        newJson.put("routeNumber", firstJsonObject.get("routeNumber"));
+                        newJson.put("n", firstJsonObject.get("routeNumber"));
+                        newJson.put("dRu", "");
+                        newJson.put("dFromRu", "");
+                        newJson.put("dToRu", "");
                         newJson.put("id", firstJsonObject.get("id"));
+                        newJson.put("d", "not used");
+                        newJson.put("dKz", "");
+                        newJson.put("descrRu", "");
+                        newJson.put("descrKz", "");
+
+                        JSONObject stopsJsonObject2 = new JSONObject();
+                        if (secondJsonObject.get("isStopPoint").equals(1)) {
+                            stopsJsonObject2.put("id", secondJsonObject.get("stopID"));
+                            stopsJsonObject2.put("title", secondJsonObject.get("stopTitle"));
+                            stopsJsonObject2.put("x", secondJsonObject.get("stopLongitude"));
+                            stopsJsonObject2.put("y", secondJsonObject.get("stopLatitude"));
+                            stopsJsonObject2.put("desc", "");
+                            stopsJsonObject2.put("routes", emptyJsonArray);
+                            busStopsJsonArray.add(stopsJsonObject2);
+                            newJson.put("busstops", busStopsJsonArray);
+                        }
+
                         i = j;
-                    }else{
+
+                    } else {
                         break;
                     }
                 }
